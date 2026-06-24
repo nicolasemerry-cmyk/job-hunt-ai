@@ -19,45 +19,76 @@ from urllib.parse import urljoin
 
 # ─── CONFIGURATION ───────────────────────────────────────────────────────────
 
-KEYWORDS_TITLE = [
-    "video editor", "video producer", "videographer", "content producer",
-    "video producer and editor", "film editor", "post-production",
-    "post production", "motion graphics", "editor", "producer",
-    "content creator", "digital content", "social media video",
-    "music video", "filmmaker", "film maker", "colour grading",
-    "color grading", "camera operator"
+# ── Relevance model ───────────────────────────────────────────────────────────
+# Matching is done with WORD BOUNDARIES (see _has / is_relevant), so "editor"
+# no longer matches "editorial", etc.
+#
+# Scope (confirmed by Nicolas): video editing/post, videography/camera, and
+# video & content producing. NOT motion graphics/animation. Plain "Producer"/
+# "Editor" only count when there's a video/film/content signal (or the source
+# board is film/video-only).
+
+# Strong keywords — relevant on their own.
+STRONG_KEYWORDS = [
+    "video editor", "video producer", "video producer and editor", "videographer",
+    "video content", "video editing", "content producer", "content creator",
+    "film editor", "filmmaker", "film maker", "post-production", "post production",
+    "post producer", "camera operator", "social media video", "music video",
+    "colour grading", "color grading", "director of photography",
+    "videographer and editor", "video editor and motion",
 ]
 
-KEYWORDS_SKILLS = [
-    "premiere pro", "davinci resolve", "after effects", "multicam",
-    "sony", "mirrorless", "live streaming", "youtube", "final cut"
+# Generic role words — only count WITH a video/film/content context word, OR when
+# the source board is video/film-only (VIDEO_SITES).
+GENERIC_ROLES = ["editor", "producer", "edit assistant", "assistant editor"]
+
+CONTEXT = [
+    "video", "film", "footage", "content", "social", "youtube", "broadcast",
+    "commercial", "advert", "documentary", "post-production", "post production",
+    "reels", "cinema", "vfx", "motion", "videograph", "camera", "grading", "edit suite",
 ]
 
 EXCLUDE_TERMS = [
     # Irrelevant industries
-    "casting", "audition", "actor", "actress", "model", "voiceover",
-    "voice over", "theatre", "theater", "dancer", "musician",
-    "accountant", "finance", "developer", "software engineer",
-    "data analyst", "solicitor", "legal",
-    # Audio/sound roles — wrong discipline
-    "dubbing", "sound editor", "audio editor", "audio producer",
-    "audio engineer", "sound designer", "sound mixer", "re-recording",
-    "dialogue editor", "foley", "podcast producer", "radio producer",
-    # Wrong genre with required specialist experience
-    "culinary", "food producer", "cooking", "live entertainment",
-    "live ob", "gallery producer", "studio producer",
-    "script editor", "script supervisor", "casting director",
-    "task producer", "challenge producer",
+    "casting", "audition", "actor", "actress", "model", "voiceover", "voice over",
+    "theatre", "theater", "dancer", "musician", "accountant", "finance",
+    "developer", "software engineer", "data analyst", "solicitor", "legal",
+    # Audio/sound — wrong discipline
+    "dubbing", "sound editor", "audio editor", "audio producer", "audio engineer",
+    "sound designer", "sound mixer", "re-recording", "dialogue editor", "foley",
+    "podcast", "radio", "audio post", "music producer",
+    # Print / words / static-design noise
+    "editorial", "copywriter", "copy editor", "photo editor", "picture editor",
+    "sub-editor", "subeditor", "animator", "animation", "illustrator", "illustration",
+    "graphic designer",
+    # Management / ops noise
+    "studio manager", "account manager", "project manager", "office manager",
+    "studio coordinator", "production manager", "production coordinator",
+    # Wrong-discipline producers
+    "event producer", "experiential", "activation", "welfare", "engagement producer",
+    "concert", "course", "gallery producer", "studio producer", "live ob",
+    "challenge producer", "task producer", "script editor", "script supervisor",
+    "culinary", "food producer", "cooking", "brand experience",
     # Too senior / management
-    "senior", "head of", "lead ", "principal", "director of",
-    "chief", "vp ", "vice president", "executive producer",
-    "creative director", "associate director",
-    "series producer", "series director", "supervising producer",
-    "line producer", "executive director",
+    "senior", "head of", "lead", "principal", "director of", "chief", "vp",
+    "vice president", "executive producer", "creative director", "associate director",
+    "series producer", "series director", "supervising producer", "line producer",
+    "executive director",
     # Wrong sector
     "social media manager", "marketing manager", "brand manager",
     "performance marketing", "growth marketing",
 ]
+
+# "director of photography" contains "director of" (an exclude) but IS wanted.
+ALLOW_OVERRIDE = ["director of photography"]
+
+# Boards that are exclusively film/TV/video — on these, a bare "Producer"/"Editor"
+# is treated as in-scope without needing an extra context word.
+VIDEO_SITES = {
+    "FilmIndustryJobs", "ProductionBase", "Mandy (Crew Jobs UK)", "ScreenSkills",
+    "GrapevineJobs", "ShowbizJobs (UK)", "The Talent Manager", "APA Jobs",
+    "Tomorrow Worldwide",
+}
 
 HEADERS = {
     "User-Agent": (
@@ -249,15 +280,27 @@ def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
 
-def is_relevant(title):
-    title_lower = title.lower().strip()
-    if len(title_lower) < 5:
+def _has(term, text):
+    """Word-boundary match (tolerates a trailing plural 's').
+    Prevents 'editor' from matching 'editorial' and 'event' from missing
+    'events'. `text` should be pre-padded with spaces."""
+    return re.search(r"(?<![a-z])" + re.escape(term) + r"s?(?![a-z])", text) is not None
+
+def is_relevant(title, source=""):
+    t = " " + title.lower().strip() + " "
+    if len(title.strip()) < 5:
         return False
-    for ex in EXCLUDE_TERMS:
-        if ex in title_lower:
-            return False
-    for kw in KEYWORDS_TITLE:
-        if kw in title_lower:
+    # Excludes win, unless the title is explicitly allow-listed.
+    if not any(a in t for a in ALLOW_OVERRIDE):
+        for ex in EXCLUDE_TERMS:
+            if _has(ex, t):
+                return False
+    # Strong keywords are relevant on their own.
+    if any(_has(kw, t) for kw in STRONG_KEYWORDS):
+        return True
+    # Generic role words need a video/film/content signal, or a video-only board.
+    if any(_has(g, t) for g in GENERIC_ROLES):
+        if source in VIDEO_SITES or any(_has(c, t) for c in CONTEXT):
             return True
     return False
 
@@ -275,6 +318,7 @@ def fetch_jobs(page, site):
         soup = BeautifulSoup(content, "lxml")
 
         seen = set()
+        seen_urls = set()
         dedup_by = site.get("dedup_by", "title")
         title_sel = site.get("title_selector")
         links = soup.select(site["job_selector"])
@@ -315,7 +359,12 @@ def fetch_jobs(page, site):
                 continue
             seen.add(key)
 
-            if is_relevant(title):
+            # Collapse the same job appearing under two anchor texts (same URL).
+            if full_url in seen_urls:
+                continue
+            seen_urls.add(full_url)
+
+            if is_relevant(title, site["name"]):
                 results.append({"title": title, "url": full_url})
 
     except Exception as e:
@@ -335,7 +384,7 @@ def fetch_rss_jobs(feed):
         for item in items:
             title = (item.findtext("title") or "").strip()
             link = (item.findtext("link") or "").strip()
-            if title and link and is_relevant(title):
+            if title and link and is_relevant(title, feed["name"]):
                 results.append({"title": title, "url": link})
     except Exception as e:
         results.append({"title": f"⚠️ Error fetching RSS: {e}", "url": feed["url"], "error": True})
@@ -436,97 +485,4 @@ def generate_report(all_results, new_counts, date_str):
 </html>"""
     return html
 
-# ─── MAIN ─────────────────────────────────────────────────────────────────────
-
-def main():
-    date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    print(f"\n  Job Scanner -- {date_str}")
-    print("-" * 50)
-
-    state = load_state()
-    all_results = {}
-    new_counts = {}
-
-    # ── RSS feeds (no Playwright needed) ──────────────────────────────────────
-    for feed in RSS_FEEDS:
-        print(f"  Scanning: {feed['name']}...", end=" ", flush=True)
-        jobs = fetch_rss_jobs(feed)
-        site_key = feed["name"]
-        prev_urls = set(state.get(site_key, []))
-        new_count = sum(1 for j in jobs if not j.get("error") and j["url"] not in prev_urls)
-        for job in jobs:
-            if not job.get("error"):
-                job["is_new"] = job["url"] not in prev_urls
-        new_counts[site_key] = new_count
-        all_results[site_key] = {"jobs": jobs, "url": feed["url"]}
-        state[site_key] = [j["url"] for j in jobs if not j.get("error")]
-        status = f"OK  {len(jobs)} found ({new_count} new)" if jobs and not any(j.get("error") for j in jobs) else "!!  error or no results"
-        print(status)
-
-    stealth = Stealth()
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-
-        for site in SITES:
-            print(f"  Scanning: {site['name']}...", end=" ", flush=True)
-
-            page = browser.new_page()
-            page.set_extra_http_headers(HEADERS)
-            stealth.apply_stealth_sync(page)
-
-            jobs = fetch_jobs(page, site)
-            page.close()
-
-            site_key = site["name"]
-            prev_urls = set(state.get(site_key, []))
-            new_count = 0
-
-            for job in jobs:
-                if not job.get("error"):
-                    job["is_new"] = job["url"] not in prev_urls
-                    if job["is_new"]:
-                        new_count += 1
-
-            new_counts[site_key] = new_count
-            all_results[site_key] = {"jobs": jobs, "url": site["url"]}
-
-            state[site_key] = [j["url"] for j in jobs if not j.get("error")]
-
-            status = f"OK  {len(jobs)} found ({new_count} new)" if jobs and not any(j.get("error") for j in jobs) else "!!  error or no results"
-            print(status)
-
-        browser.close()
-
-    save_state(state)
-
-    # Collect new jobs as flat list for email/JSON output
-    new_jobs_list = []
-    for site_name, data in all_results.items():
-        for job in data["jobs"]:
-            if job.get("is_new") and not job.get("error"):
-                new_jobs_list.append({
-                    "title": job["title"],
-                    "url": job["url"],
-                    "source": site_name,
-                })
-
-    with open("new_jobs.json", "w", encoding="utf-8") as f:
-        json.dump({"date": date_str, "new_count": len(new_jobs_list), "jobs": new_jobs_list}, f, indent=2)
-
-    report_html = generate_report(all_results, new_counts, date_str)
-    report_file = "job_report.html"
-
-    with open(report_file, "w", encoding="utf-8") as f:
-        f.write(report_html)
-
-    total_new = sum(new_counts.values())
-    total_found = sum(len(v["jobs"]) for v in all_results.values())
-
-    print("-" * 50)
-    print(f"  Done. {total_found} matching jobs found, {total_new} new since last run.")
-    print(f"  Report saved: {report_file}\n")
-
-if __name__ == "__main__":
-    main()
+# ─── MAIN ───────────────────────────────�
