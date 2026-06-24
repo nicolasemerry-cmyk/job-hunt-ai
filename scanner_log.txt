@@ -1,0 +1,28 @@
+
+  Job Scanner -- 2026-06-21 18:42
+--------------------------------------------------
+  Scanning: APA Jobs... OK  8 found (0 new)
+  Scanning: music-jobs.com UK... OK  3 found (2 new)
+  Scanning: Creative Lives in Progress... !!  error or no results
+  Scanning: UAL Creative Opportunities... !!  error or no results
+  Scanning: If You Could Jobs... OK  7 found (2 new)
+  Scanning: Run The Check... !!  error or no results
+  Scanning: Workculture... !!  error or no results
+  Scanning: Doors Open... !!  error or no results
+  Scanning: Create Jobs Community... !!  error or no results
+  Scanning: Creative Access (Junior, London)... !!  error or no results
+  Scanning: Major Players... !!  error or no results
+  Scanning: Tomorrow Worldwide... OK  10 found (0 new)
+  Scanning: Mandy (Crew Jobs UK)... OK  2 found (2 new)
+  Scanning: ProductionBase... !!  error or no results
+  Scanning: The Talent Manager... OK  4 found (4 new)
+  Scanning: ScreenSkills... OK  1 found (1 new)
+  Scanning: Burberry Careers... !!  error or no results
+  Scanning: GrapevineJobs... OK  1 found (1 new)
+  Scanning: FilmIndustryJobs... OK  6 found (0 new)
+  Scanning: ShowbizJobs (UK)... OK  1 found (1 new)
+--------------------------------------------------
+  Done. 43 matching jobs found, 13 new since last run.
+  Report saved: job_report.html
+
+Exit code: 0 

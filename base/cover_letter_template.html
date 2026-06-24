@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nicolas Merry — Cover Letter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 10.5pt;
+    color: #1a1a1a;
+    background: #fff;
+  }
+
+  .page {
+    max-width: 794px;
+    margin: 0 auto;
+    padding: 52px 56px;
+    min-height: 1123px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1.5px solid #86E0A8;
+  }
+
+  .header-left h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.3px;
+  }
+
+  .header-left .subtitle {
+    font-size: 9.5pt;
+    color: #86E0A8;
+    font-weight: 500;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    text-align: right;
+    font-size: 9pt;
+    color: #666;
+    line-height: 1.7;
+  }
+
+  .header-right a {
+    color: #3a8a5c;
+    text-decoration: none;
+  }
+
+  /* ── DATE + ADDRESSEE ── */
+  .meta {
+    margin-bottom: 28px;
+    font-size: 9.5pt;
+    color: #555;
+    line-height: 1.7;
+  }
+
+  .meta .date {
+    color: #999;
+    margin-bottom: 14px;
+  }
+
+  .meta .addressee {
+    color: #333;
+  }
+
+  .meta .addressee strong {
+    display: block;
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 2px;
+  }
+
+  /* ── SALUTATION ── */
+  .salutation {
+    font-size: 10.5pt;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 20px;
+  }
+
+  /* ── BODY ── */
+  .body p {
+    font-size: 10.5pt;
+    color: #333;
+    line-height: 1.75;
+    margin-bottom: 16px;
+  }
+
+  .body p strong {
+    color: #111;
+    font-weight: 600;
+  }
+
+  /* ── SIGN-OFF ── */
+  .signoff {
+    margin-top: 32px;
+    font-size: 10.5pt;
+    color: #333;
+    line-height: 1.9;
+  }
+
+  .signoff .name {
+    font-weight: 700;
+    color: #111;
+    font-size: 11pt;
+    margin-top: 4px;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; }
+    .page { padding: 40px 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Nicolas Merry</h1>
+      <div class="subtitle">Video Producer &amp; Editor</div>
+    </div>
+    <div class="header-right">
+      nicolasemerry@gmail.com<br>
+      +44 7521 435596<br>
+      <a href="https://nicolas-merry.com">nicolas-merry.com</a><br>
+      London, England
+    </div>
+  </div>
+
+  <!-- DATE + ADDRESSEE -->
+  <!-- TAILORING NOTE FOR CLAUDE CODE:
+       Replace the fields below with the actual company name, hiring manager name (if known),
+       job title, and today's date. If no hiring manager name is available, use "Hiring Team". -->
+  <div class="meta">
+    <div class="date">{{DATE}}</div>
+    <div class="addressee">
+      <strong>{{HIRING_MANAGER_NAME}}</strong>
+      {{JOB_TITLE}}<br>
+      {{COMPANY_NAME}}
+    </div>
+  </div>
+
+  <!-- SALUTATION -->
+  <div class="salutation">Dear {{HIRING_MANAGER_NAME or "Hiring Team"}},</div>
+
+  <!-- BODY -->
+  <!-- TAILORING NOTE FOR CLAUDE CODE:
+       The three paragraphs below follow a fixed structure. For each application:
+       - Para 1: State the role, where you found it, and a one-line hook about why you're a fit.
+       - Para 2: Draw on 2-3 specific, relevant experiences from the CV that match the job description. Be concrete — name tools, outputs, and results.
+       - Para 3: Show genuine knowledge of the company/project and explain why this specific role appeals to Nicolas's direction (music video, documentary, short-form commercial).
+       Keep the tone confident and direct. Avoid clichés ("I am passionate about..."). No longer than one page. -->
+
+  <div class="body">
+
+    <p>
+      I am writing to apply for the position of <strong>{{JOB_TITLE}}</strong> at <strong>{{COMPANY_NAME}}</strong>.
+      With over five years of hands-on production experience — currently as Video Producer and Editor at Doctor Mix,
+      a professional audio and video studio — I bring a strong technical foundation and a genuine drive to create
+      work that is both precise and visually compelling.
+    </p>
+
+    <p>
+      {{TAILORED_PARAGRAPH_2 — specific experience relevant to this role and company. Example:
+      "In my current role, I lead end-to-end production for a YouTube channel with 820K+ subscribers,
+      managing everything from studio lighting and on-set audio to multicam editing, colour grading in
+      DaVinci Resolve, and motion graphics in After Effects. Alongside this, my freelance work has taken
+      me into music video production and album film work, where I've developed a feel for narrative-led
+      visuals and technically demanding colour pipelines working with Red raw footage."}}
+    </p>
+
+    <p>
+      {{TAILORED_PARAGRAPH_3 — why this company/role specifically. Show you've done your research.
+      Example: "What draws me to [Company] is [specific project, output, or approach]. I'm actively
+      looking to move further into [music video / documentary / short-form commercial] work, and
+      this role represents exactly the kind of environment I want to grow in."}}
+    </p>
+
+    <p>
+      I would welcome the opportunity to discuss how my experience aligns with what you're looking for.
+      My portfolio is available at <a href="https://nicolas-merry.com" style="color:#3a8a5c;">nicolas-merry.com</a>
+      and I am happy to share any additional work on request.
+    </p>
+
+  </div>
+
+  <!-- SIGN-OFF -->
+  <div class="signoff">
+    Yours sincerely,<br>
+    <span class="name">Nicolas Merry</span>
+  </div>
+
+</div>
+</body>
+</html>
