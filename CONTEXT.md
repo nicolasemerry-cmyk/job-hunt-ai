@@ -1,7 +1,7 @@
 # Job Hunt — Claude Code Context
 
 ## What this folder is
-A job scanner that scrapes 15 creative job boards for relevant video/film production roles and generates an HTML report. Run it twice a week.
+A job scanner that scrapes 20 creative job boards/feeds for relevant video/film production roles and generates an HTML report. Runs automatically twice a week via GitHub Actions (Mon + Thu 8am UTC) and emails the results; can also be run manually.
 
 ## YOUR INSTRUCTIONS — DO THIS NOW
 You are reading this as the start of a new session. Do the following immediately, without waiting for further input:
@@ -52,7 +52,8 @@ When he says something like "generate applications for jobs 2 and 5" or "apply f
 ## How "new" detection works
 After each run, `last_seen.json` is updated with all job URLs found. On the next run, anything not in that file is marked NEW in the report. Never delete `last_seen.json` or the new-detection resets.
 
-## The sites being scanned
+## The sites being scanned (20 sources: 18 scraped + 2 RSS)
+Scraped with Playwright (headless Chromium):
 1. Creative Lives in Progress — https://creativelivesinprogress.com/opportunities
 2. UAL Creative Opportunities — https://creativeopportunities.arts.ac.uk/vacancies/
 3. If You Could Jobs — https://www.ifyoucouldjobs.com/jobs
@@ -68,25 +69,34 @@ After each run, `last_seen.json` is updated with all job URLs found. On the next
 13. The Talent Manager — https://www.thetalentmanager.com/jobs
 14. ScreenSkills — https://www.screenskills.com/jobs/
 15. Burberry Careers — https://burberrycareers.com/go/Search-and-Apply/
+16. GrapevineJobs — https://www.grapevinejobs.co.uk/jobs-in-media-broadcast-tv-video-post-production
+17. FilmIndustryJobs — https://www.filmindustryjobs.co.uk/jobs
+18. ShowbizJobs (UK) — https://www.showbizjobs.com/jobs/location/country/gb
+
+RSS feeds (requests + ElementTree, no Playwright):
+19. APA Jobs — https://www.a-p-a.net/jobs/feed/
+20. music-jobs.com UK — https://www.music-jobs.com/uk/rss/rss_jobs-44.xml
 
 ## Known issues
-Most sites block simple scrapers or require JavaScript to render. Currently only a handful return results (If You Could Jobs and Tomorrow Worldwide confirmed working). If Nicolas wants better coverage, the fix is to upgrade the failing sites to use Playwright (headless browser). He can ask for that as a separate task.
+Many sites block simple scrapers or require JavaScript, so coverage varies run to run.
+As of the 2026-06-24 GitHub run, results came back from: APA Jobs, music-jobs.com UK,
+If You Could Jobs, Tomorrow Worldwide, The Talent Manager, GrapevineJobs, and
+FilmIndustryJobs. The others returned nothing that run (blocked, empty, or selector
+drift). If Nicolas wants better coverage, individual site selectors/handling can be
+upgraded as a separate task.
 
-## Keywords being matched
-**Include:** video editor, video producer, videographer, content producer, film editor, post-production, motion graphics, filmmaker, camera operator, colour grading, digital content, content creator, DaVinci Resolve colourist
+## How relevance matching works (updated 2026-06-24, scanner commit `319f523`)
+Matching uses **word boundaries** (`_has()` in `job_scanner.py`), not naive substring
+search — so "editor" no longer matches "editorial", etc. Confirmed scope with Nicolas:
+**keep** video editing/post, videography/camera, and video & content producing;
+**drop** motion graphics/animation and standalone non-video producer roles.
 
-**Exclude:** casting, audition, actor, model, theatre, accountant, software engineer, data analyst, legal, senior, head of, lead, principal, director of, chief, executive producer, creative director
-
-## Who Nicolas is (for context)
-Video producer, director, and editor. Currently employed at Doctor Mix (820K+ subscriber YouTube channel). Based in London. Age 23, about to turn 24. Key skills: Premiere Pro, DaVinci Resolve, After Effects, Sony mirrorless cameras, colour grading, motion graphics, live streaming, multicam editing, studio lighting, on-set audio.
-
-## Role selection criteria — IMPORTANT
-When recommending or selecting roles to apply for, apply these filters:
-
-**Level:** Junior or mid-level only. Exclude anything with "Senior", "Head of", "Lead", "Principal", "Director of", "Executive Producer", or "Creative Director" in the title. Nicolas has ~4 years freelance + less than 1 year full-time studio experience — he is not a senior hire.
-
-**Good fit signals:** roles that mention video production, editing, post-production, content creation, camera operation, or similar. Bonus if they mention Premiere Pro, DaVinci Resolve, After Effects, YouTube, or social video.
-
-**Poor fit signals:** roles that are primarily marketing, copywriting, graphic design (no video), photography only, or require 5+ years experience. Flag these as low-fit rather than recommending them.
-
-**When summarising results**, group into: Strong fit / Possible fit / Probably not — so Nicolas can quickly decide what to pursue.
+Three layers in `is_relevant(title, source)`:
+1. **STRONG_KEYWORDS** — relevant on their own: video editor, video producer,
+   videographer, video content, content producer, content creator, film editor,
+   filmmaker, post-production, post producer, camera operator, social media video,
+   music video, colour/color grading, director of photography.
+2. **GENERIC_ROLES** (editor, producer, assistant editor) — only count when the title
+   also has a **CONTEXT** word (video, film, content, social, footage, broadcast,
+   documentary, motion, camera, grading…) OR the board is a **VIDEO_SITES** one
+   (FilmIndustryJobs, Prod
