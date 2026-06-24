@@ -33,7 +33,7 @@ jobs:
         run: python job_scanner.py
 
       - name: Send email report
-              continue-on-error: true
+        continue-on-error: true
         env:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python send_report.py
