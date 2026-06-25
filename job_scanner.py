@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Job Scanner — Nicolas Merry
+Job Scanner - Nicolas Merry
 Scans creative job boards for relevant video/film production roles.
 Run with: python job_scanner.py
 Results saved to: job_report.html
@@ -17,9 +17,9 @@ import re
 from datetime import datetime
 from urllib.parse import urljoin
 
-# ─── CONFIGURATION ───────────────────────────────────────────────────────────
+# --- CONFIGURATION -----------------------------------------------------------
 
-# ── Relevance model ───────────────────────────────────────────────────────────
+# -- Relevance model -----------------------------------------------------------
 # Matching is done with WORD BOUNDARIES (see _has / is_relevant), so "editor"
 # no longer matches "editorial", etc.
 #
@@ -28,7 +28,7 @@ from urllib.parse import urljoin
 # "Editor" only count when there's a video/film/content signal (or the source
 # board is film/video-only).
 
-# Strong keywords — relevant on their own.
+# Strong keywords - relevant on their own.
 STRONG_KEYWORDS = [
     "video editor", "video producer", "video producer and editor", "videographer",
     "video content", "video editing", "content producer", "content creator",
@@ -38,7 +38,7 @@ STRONG_KEYWORDS = [
     "videographer and editor", "video editor and motion",
 ]
 
-# Generic role words — only count WITH a video/film/content context word, OR when
+# Generic role words - only count WITH a video/film/content context word, OR when
 # the source board is video/film-only (VIDEO_SITES).
 GENERIC_ROLES = ["editor", "producer", "edit assistant", "assistant editor"]
 
@@ -53,7 +53,7 @@ EXCLUDE_TERMS = [
     "casting", "audition", "actor", "actress", "model", "voiceover", "voice over",
     "theatre", "theater", "dancer", "musician", "accountant", "finance",
     "developer", "software engineer", "data analyst", "solicitor", "legal",
-    # Audio/sound — wrong discipline
+    # Audio/sound - wrong discipline
     "dubbing", "sound editor", "audio editor", "audio producer", "audio engineer",
     "sound designer", "sound mixer", "re-recording", "dialogue editor", "foley",
     "podcast", "radio", "audio post", "music producer",
@@ -82,7 +82,7 @@ EXCLUDE_TERMS = [
 # "director of photography" contains "director of" (an exclude) but IS wanted.
 ALLOW_OVERRIDE = ["director of photography"]
 
-# Boards that are exclusively film/TV/video — on these, a bare "Producer"/"Editor"
+# Boards that are exclusively film/TV/video - on these, a bare "Producer"/"Editor"
 # is treated as in-scope without needing an extra context word.
 VIDEO_SITES = {
     "FilmIndustryJobs", "ProductionBase", "Mandy (Crew Jobs UK)", "ScreenSkills",
@@ -101,7 +101,7 @@ HEADERS = {
 
 STATE_FILE = "last_seen.json"
 
-# ─── SITES CONFIG ─────────────────────────────────────────────────────────────
+# --- SITES CONFIG -------------------------------------------------------------
 
 SITES = [
     {
@@ -255,7 +255,7 @@ SITES = [
     },
 ]
 
-# ─── RSS FEEDS CONFIG ─────────────────────────────────────────────────────────
+# --- RSS FEEDS CONFIG ---------------------------------------------------------
 
 RSS_FEEDS = [
     {
@@ -268,7 +268,7 @@ RSS_FEEDS = [
     },
 ]
 
-# ─── HELPERS ──────────────────────────────────────────────────────────────────
+# --- HELPERS ------------------------------------------------------------------
 
 def load_state():
     if os.path.exists(STATE_FILE):
@@ -311,7 +311,7 @@ def fetch_jobs(page, site):
         try:
             page.goto(site["url"], wait_until="networkidle", timeout=30000)
         except PlaywrightTimeoutError:
-            # Page took too long to go fully idle — use whatever loaded
+            # Page took too long to go fully idle - use whatever loaded
             pass
 
         content = page.content()
@@ -339,7 +339,7 @@ def fetch_jobs(page, site):
             else:
                 full_url = urljoin(site["url"], href)
 
-            # Extract title — from a child/parent element if title_selector is set
+            # Extract title - from a child/parent element if title_selector is set
             if title_sel:
                 title_el = tag.select_one(title_sel)
                 if not title_el:
@@ -368,7 +368,7 @@ def fetch_jobs(page, site):
                 results.append({"title": title, "url": full_url})
 
     except Exception as e:
-        results.append({"title": f"⚠️ Error fetching site: {e}", "url": site["url"], "error": True})
+        results.append({"title": f"! Error fetching site: {e}", "url": site["url"], "error": True})
 
     return results
 
@@ -387,10 +387,10 @@ def fetch_rss_jobs(feed):
             if title and link and is_relevant(title, feed["name"]):
                 results.append({"title": title, "url": link})
     except Exception as e:
-        results.append({"title": f"⚠️ Error fetching RSS: {e}", "url": feed["url"], "error": True})
+        results.append({"title": f"! Error fetching RSS: {e}", "url": feed["url"], "error": True})
     return results
 
-# ─── HTML REPORT ──────────────────────────────────────────────────────────────
+# --- HTML REPORT --------------------------------------------------------------
 
 def generate_report(all_results, new_counts, date_str):
     total_new = sum(new_counts.values())
@@ -411,7 +411,7 @@ def generate_report(all_results, new_counts, date_str):
             is_new = j.get("is_new", False)
             new_tag = ' <span class="new-tag">NEW</span>' if is_new else ""
             if j.get("error"):
-                job_items += f'<li class="error-item">⚠️ {j["title"]}</li>'
+                job_items += f'<li class="error-item">! {j["title"]}</li>'
             else:
                 li_class = ' class="new-item"' if is_new else ""
                 job_items += f'<li{li_class}><a href="{j["url"]}" target="_blank">{j["title"]}</a>{new_tag}</li>'
@@ -423,7 +423,7 @@ def generate_report(all_results, new_counts, date_str):
         <div class="site-block{'  error-block' if error else ''}">
             <div class="site-header">
                 <h2>{site_name}</h2>
-                <div class="site-meta">{status} &nbsp;·&nbsp; <a href="{data['url']}" target="_blank">open site ↗</a></div>
+                <div class="site-meta">{status} &nbsp;-&nbsp; <a href="{data['url']}" target="_blank">open site </a></div>
             </div>
             <ul>{job_items}</ul>
         </div>
@@ -434,7 +434,7 @@ def generate_report(all_results, new_counts, date_str):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Job Scan — {date_str}</title>
+<title>Job Scan - {date_str}</title>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 32px 24px; }}
@@ -480,9 +480,102 @@ def generate_report(all_results, new_counts, date_str):
 <div class="sites">
 {site_rows}
 </div>
-<div class="footer">Generated by job_scanner.py · Keywords: video editor, video producer, videographer, content producer, filmmaker, motion graphics, post-production</div>
+<div class="footer">Generated by job_scanner.py - Keywords: video editor, video producer, videographer, content producer, filmmaker, motion graphics, post-production</div>
 </body>
 </html>"""
     return html
 
-# ─── MAIN ───────────────────────────────�
+# --- MAIN ---------------------------------------------------------------------
+
+def main():
+    date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    print(f"\n  Job Scanner -- {date_str}")
+    print("-" * 50)
+
+    state = load_state()
+    all_results = {}
+    new_counts = {}
+
+    # -- RSS feeds (no Playwright needed) --------------------------------------
+    for feed in RSS_FEEDS:
+        print(f"  Scanning: {feed['name']}...", end=" ", flush=True)
+        jobs = fetch_rss_jobs(feed)
+        site_key = feed["name"]
+        prev_urls = set(state.get(site_key, []))
+        new_count = sum(1 for j in jobs if not j.get("error") and j["url"] not in prev_urls)
+        for job in jobs:
+            if not job.get("error"):
+                job["is_new"] = job["url"] not in prev_urls
+        new_counts[site_key] = new_count
+        all_results[site_key] = {"jobs": jobs, "url": feed["url"]}
+        state[site_key] = [j["url"] for j in jobs if not j.get("error")]
+        status = f"OK  {len(jobs)} found ({new_count} new)" if jobs and not any(j.get("error") for j in jobs) else "!!  error or no results"
+        print(status)
+
+    stealth = Stealth()
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+
+        for site in SITES:
+            print(f"  Scanning: {site['name']}...", end=" ", flush=True)
+
+            page = browser.new_page()
+            page.set_extra_http_headers(HEADERS)
+            stealth.apply_stealth_sync(page)
+
+            jobs = fetch_jobs(page, site)
+            page.close()
+
+            site_key = site["name"]
+            prev_urls = set(state.get(site_key, []))
+            new_count = 0
+
+            for job in jobs:
+                if not job.get("error"):
+                    job["is_new"] = job["url"] not in prev_urls
+                    if job["is_new"]:
+                        new_count += 1
+
+            new_counts[site_key] = new_count
+            all_results[site_key] = {"jobs": jobs, "url": site["url"]}
+
+            state[site_key] = [j["url"] for j in jobs if not j.get("error")]
+
+            status = f"OK  {len(jobs)} found ({new_count} new)" if jobs and not any(j.get("error") for j in jobs) else "!!  error or no results"
+            print(status)
+
+        browser.close()
+
+    save_state(state)
+
+    # Collect new jobs as flat list for email/JSON output
+    new_jobs_list = []
+    for site_name, data in all_results.items():
+        for job in data["jobs"]:
+            if job.get("is_new") and not job.get("error"):
+                new_jobs_list.append({
+                    "title": job["title"],
+                    "url": job["url"],
+                    "source": site_name,
+                })
+
+    with open("new_jobs.json", "w", encoding="utf-8") as f:
+        json.dump({"date": date_str, "new_count": len(new_jobs_list), "jobs": new_jobs_list}, f, indent=2)
+
+    report_html = generate_report(all_results, new_counts, date_str)
+    report_file = "job_report.html"
+
+    with open(report_file, "w", encoding="utf-8") as f:
+        f.write(report_html)
+
+    total_new = sum(new_counts.values())
+    total_found = sum(len(v["jobs"]) for v in all_results.values())
+
+    print("-" * 50)
+    print(f"  Done. {total_found} matching jobs found, {total_new} new since last run.")
+    print(f"  Report saved: {report_file}\n")
+
+if __name__ == "__main__":
+    main()
